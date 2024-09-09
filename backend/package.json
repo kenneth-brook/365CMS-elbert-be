@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.556.0",
+    "aws-serverless-express": "^3.4.0",
+    "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15",
+    "pg": "^8.11.5"
+  }
+}
