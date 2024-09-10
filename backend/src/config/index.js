@@ -6,7 +6,7 @@ const secretsManager = new SecretsManagerClient({
 });
 
 async function getDatabaseCredentials() {
-    const command = new GetSecretValueCommand({ SecretId: "rds!db-165b602b-f5aa-4eb3-a079-7f73c4b4e840" });
+    const command = new GetSecretValueCommand({ SecretId: "rds!db-39dd4c27-6e7e-42fd-81ac-91e5ce44b030" });
 
     try {
         const data = await secretsManager.send(command);
