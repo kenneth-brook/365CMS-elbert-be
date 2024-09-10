@@ -10,7 +10,7 @@ async function getDbPool() {
             user: secret.username,
             password: secret.password,
             host: 'easyflow-pgdb-dev-demo.cx7nkm5j7v6b.us-east-1.rds.amazonaws.com',
-            database: 'easyflow_dev_demo',
+            database: 'elbert-easy-flow',
             port: 5432,
             ssl: { rejectUnauthorized: false } // specify CA in production
         });

@@ -61,13 +61,20 @@ app.use('/users', usersRoutes);
 app.use('/add-user', addUserRoutes);
 app.use('/google', googlePlaceRoutes);
 
+app.get('/test', (req, res) => {
+  res.status(200).send(`Test path hit`);
+});
+
 app.get('*', (req, res) => {
     res.status(200).send(`You hit path: ${req.path}`);
 });
 
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+  console.error(err.stack);
+  res.status(500).json({
+      message: 'Internal Server Error',
+      error: err.message, // Provide error message for easier debugging
+  });
 });
 
 module.exports = app;
