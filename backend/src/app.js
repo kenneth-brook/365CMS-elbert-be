@@ -27,11 +27,21 @@ const app = express();
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: 'https://elbert.365easyflow.com', // Only allow this URL
+  origin: (origin, callback) => {
+    console.log(`Origin: ${origin}`);
+    if (origin === 'https://elbert.365easyflow.com' || 
+        !origin || 
+        /^http:\/\/localhost:\d+$/.test(origin) ||
+        /^http:\/\/10\.128\.1\.\d+:\d+$/.test(origin)) {
+        callback(null, true);
+    } else {
+        callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,  // Allow credentials such as cookies, authorization headers
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200  // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -61,20 +71,13 @@ app.use('/users', usersRoutes);
 app.use('/add-user', addUserRoutes);
 app.use('/google', googlePlaceRoutes);
 
-app.get('/test', (req, res) => {
-  res.status(200).send(`Test path hit`);
-});
-
 app.get('*', (req, res) => {
     res.status(200).send(`You hit path: ${req.path}`);
 });
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-      message: 'Internal Server Error',
-      error: err.message, // Provide error message for easier debugging
-  });
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
 });
 
 module.exports = app;
