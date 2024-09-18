@@ -16,8 +16,8 @@ router.post('/', async (req, res) => {
 
     // Insert into stay table
     const stayResult = await client.query(
-      'INSERT INTO stay (business_id, stay_types, cost) VALUES ($1, $2, $3) RETURNING id',
-      [businessId, JSON.stringify(parsedMenuTypes), averageCost]
+      'INSERT INTO stay (business_id, stay_types) VALUES ($1, $2) RETURNING id',
+      [businessId, JSON.stringify(parsedMenuTypes)]
     );
     const stayId = stayResult.rows[0].id;
 
