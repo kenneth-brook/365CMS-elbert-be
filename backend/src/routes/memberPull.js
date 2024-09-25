@@ -31,16 +31,10 @@ router.get('/all', async (req, res) => {
   
         // Sort combinedResults alphabetically by business_name (or replace with the appropriate field)
         combinedResults.sort((a, b) => {
-          const nameA = a.business_name?.toLowerCase() || ''; // Use the relevant field here
-          const nameB = b.business_name?.toLowerCase() || '';
+          const nameA = a.name?.toLowerCase() || ''; // Use the relevant field here
+          const nameB = b.name?.toLowerCase() || '';
           return nameA.localeCompare(nameB);
         });
-  
-        // Add CORS headers manually to the response
-        res.setHeader('Access-Control-Allow-Origin', 'https://review.365dtm.com'); // or '*'
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
         res.status(200).json(combinedResults);
       } finally {
