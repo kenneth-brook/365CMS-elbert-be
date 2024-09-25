@@ -3,48 +3,68 @@ const { getDbPool } = require('../db');
 
 const router = express.Router();
 
-// Function to join business data with other tables and filter where active and chamber_member are true
+const tableConfig = {
+  eat: { typesField: 'menu_types', typeTable: 'eat_type' },
+  shop: { typesField: 'shop_types', typeTable: 'shop_type' },
+  stay: { typesField: 'stay_types', typeTable: 'stay_type' },
+  play: { typesField: 'play_types', typeTable: 'play_type' },
+  other: { typesField: 'other_types', typeTable: 'other_type' },
+};
+
 const joinWithBusinessesWhereActiveAndChamberMember = async (client, table) => {
+  const { typesField, typeTable } = tableConfig[table];
+
   return client.query(`
-    SELECT ${table}.*, businesses.*
+    SELECT ${table}.*, businesses.*, COALESCE(types.type_names, '[]'::json) AS types
     FROM ${table}
     INNER JOIN businesses ON ${table}.business_id = businesses.id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(type.name) AS type_names
+      FROM ${typeTable} AS type
+      JOIN LATERAL jsonb_array_elements_text(${table}.${typesField}) AS elem(id)
+        ON type.id::text = elem.id
+    ) AS types ON true
     WHERE businesses.active = true AND businesses.chamber_member = true
   `);
 };
 
-// GET all entries from all five dynamic tables, combine them, and order alphabetically
 router.get('/all', async (req, res) => {
-    const tables = ['eat', 'shop', 'stay', 'play', 'other'];
-    const combinedResults = [];
-  
+  const tables = ['eat', 'shop', 'stay', 'play', 'other'];
+  const combinedResults = [];
+
+  try {
+    const pool = await getDbPool();
+    const client = await pool.connect();
+
     try {
-      const pool = await getDbPool();
-      const client = await pool.connect();
-  
-      try {
-        // Loop through each table and fetch the joined data
-        for (const table of tables) {
-          const result = await joinWithBusinessesWhereActiveAndChamberMember(client, table);
-          combinedResults.push(...result.rows); // Combine all results into a single array
-        }
-  
-        // Sort combinedResults alphabetically by business_name (or replace with the appropriate field)
-        combinedResults.sort((a, b) => {
-          const nameA = a.name?.toLowerCase() || ''; // Use the relevant field here
-          const nameB = b.name?.toLowerCase() || '';
-          return nameA.localeCompare(nameB);
+      for (const table of tables) {
+        const result = await joinWithBusinessesWhereActiveAndChamberMember(client, table);
+
+        const { typesField } = tableConfig[table];
+
+        result.rows.forEach(row => {
+          row.category = table;
+          row.types = row.types || [];
+          delete row[typesField]; // Remove the original typesField if desired
         });
-  
-        res.status(200).json(combinedResults);
-      } finally {
-        client.release();
+
+        combinedResults.push(...result.rows);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      res.status(500).send('Error fetching data');
+
+      combinedResults.sort((a, b) => {
+        const nameA = a.name?.toLowerCase() || '';
+        const nameB = b.name?.toLowerCase() || '';
+        return nameA.localeCompare(nameB);
+      });
+
+      res.status(200).json(combinedResults);
+    } finally {
+      client.release();
     }
-  });
-  
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
+  }
+});
 
 module.exports = router;
