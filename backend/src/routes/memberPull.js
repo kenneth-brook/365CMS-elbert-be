@@ -11,6 +11,7 @@ const tableConfig = {
   other: { typesField: 'other_types', typeTable: 'other_type' },
 };
 
+// Existing function remains unchanged
 const joinWithBusinessesWhereActiveAndChamberMember = async (client, table) => {
   const { typesField, typeTable } = tableConfig[table];
 
@@ -28,6 +29,26 @@ const joinWithBusinessesWhereActiveAndChamberMember = async (client, table) => {
   `);
 };
 
+// New function for the shop table
+const joinWithBusinessesWhereActive = async (client) => {
+  const table = 'shop';
+  const { typesField, typeTable } = tableConfig[table];
+
+  return client.query(`
+    SELECT ${table}.*, businesses.*, COALESCE(types.type_names, '[]'::json) AS types
+    FROM ${table}
+    INNER JOIN businesses ON ${table}.business_id = businesses.id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(type.name) AS type_names
+      FROM ${typeTable} AS type
+      JOIN LATERAL jsonb_array_elements_text(${table}.${typesField}) AS elem(id)
+        ON type.id::text = elem.id
+    ) AS types ON true
+    WHERE businesses.active = true
+  `);
+};
+
+// Existing /all endpoint remains unchanged
 router.get('/all', async (req, res) => {
   const tables = ['eat', 'shop', 'stay', 'play', 'other'];
   const combinedResults = [];
@@ -58,6 +79,41 @@ router.get('/all', async (req, res) => {
       });
 
       res.status(200).json(combinedResults);
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
+  }
+});
+
+// New /shop endpoint
+router.get('/shop', async (req, res) => {
+  try {
+    const pool = await getDbPool();
+    const client = await pool.connect();
+
+    try {
+      const result = await joinWithBusinessesWhereActive(client);
+
+      const table = 'shop';
+      const { typesField } = tableConfig[table];
+
+      result.rows.forEach(row => {
+        row.category = table;
+        row.types = row.types || [];
+        delete row[typesField]; // Remove the original typesField if desired
+      });
+
+      // Optionally sort the results by name
+      result.rows.sort((a, b) => {
+        const nameA = a.name?.toLowerCase() || '';
+        const nameB = b.name?.toLowerCase() || '';
+        return nameA.localeCompare(nameB);
+      });
+
+      res.status(200).json(result.rows);
     } finally {
       client.release();
     }
