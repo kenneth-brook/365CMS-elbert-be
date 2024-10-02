@@ -30,8 +30,7 @@ const joinWithBusinessesWhereActiveAndChamberMember = async (client, table) => {
 };
 
 // New function for the shop table
-const joinWithBusinessesWhereActive = async (client) => {
-  const table = 'shop';
+const joinWithBusinessesWhereActive = async (client, table) => {
   const { typesField, typeTable } = tableConfig[table];
 
   return client.query(`
@@ -95,9 +94,8 @@ router.get('/shop', async (req, res) => {
     const client = await pool.connect();
 
     try {
-      const result = await joinWithBusinessesWhereActive(client);
-
       const table = 'shop';
+      const result = await joinWithBusinessesWhereActive(client, table);
       const { typesField } = tableConfig[table];
 
       result.rows.forEach(row => {
@@ -129,9 +127,8 @@ router.get('/eat', async (req, res) => {
     const client = await pool.connect();
 
     try {
-      const result = await joinWithBusinessesWhereActive(client);
-
       const table = 'eat';
+      const result = await joinWithBusinessesWhereActive(client, table);
       const { typesField } = tableConfig[table];
 
       result.rows.forEach(row => {
