@@ -123,4 +123,38 @@ router.get('/shop', async (req, res) => {
   }
 });
 
+router.get('/eat', async (req, res) => {
+  try {
+    const pool = await getDbPool();
+    const client = await pool.connect();
+
+    try {
+      const result = await joinWithBusinessesWhereActive(client);
+
+      const table = 'eat';
+      const { typesField } = tableConfig[table];
+
+      result.rows.forEach(row => {
+        row.category = table;
+        row.types = row.types || [];
+        delete row[typesField]; // Remove the original typesField if desired
+      });
+
+      // Optionally sort the results by name
+      result.rows.sort((a, b) => {
+        const nameA = a.name?.toLowerCase() || '';
+        const nameB = b.name?.toLowerCase() || '';
+        return nameA.localeCompare(nameB);
+      });
+
+      res.status(200).json(result.rows);
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
+  }
+});
+
 module.exports = router;
