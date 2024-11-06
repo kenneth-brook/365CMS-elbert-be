@@ -32,7 +32,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     console.log(`Origin: ${origin}`);
     if (origin === 'https://elbert.365easyflow.com' || 
-        origin === 'https://review.365dtm.com' ||  // Added new origin
+        origin === 'https://elbertchamber.com' ||  // Added new origin
         !origin || 
         /^http:\/\/localhost:\d+$/.test(origin) ||
         /^http:\/\/10\.128\.1\.\d+:\d+$/.test(origin)) {
